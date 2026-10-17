@@ -51,6 +51,12 @@ ul{margin:8px 0;padding-left:18px}
 .hr button{border:0;border-radius:12px;padding:0 16px;font-weight:700;background:var(--y);color:#3a2a00;cursor:pointer}
 .sm{font-size:12px;color:var(--mut);margin-top:6px}
 .pl{font-size:13px;margin-top:6px;padding:6px 10px;border-radius:10px;background:var(--inp);border:1px dashed var(--line)}
+.donebtn{width:100%;margin-top:12px;padding:12px;border:0;border-radius:12px;background:#16a34a;color:#fff;font:inherit;font-weight:800;cursor:pointer}
+.donebtn.undo{background:var(--inp);color:var(--ink);border:1px solid var(--line)}
+.bulkbtn{width:100%;margin-top:10px;padding:10px;border-radius:12px;border:1px solid #d33;background:transparent;color:#d33;font:inherit;font-weight:700;cursor:pointer}
+.mod{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50;overflow:auto}
+.mod.hide{display:none}
+.mod .card{width:100%;max-width:440px;margin:0}
 .empty{text-align:center;color:var(--mut);padding:30px 0}
 </style>
 </head>
@@ -75,15 +81,34 @@ ul{margin:8px 0;padding-left:18px}
 <div class="hr"><input id="hpp" type="number" inputmode="numeric" min="1" value="380000"><button id="hppSave" type="button">Simpan</button></div>
 <div class="sm" id="hppMsg"></div>
 </div>
+<div class="card" id="stokCard">
+<b>📦 Stok Tersedia</b>
+<div id="stokInfo"></div>
+<label for="stokIn">Atur jumlah stok (dalam slop)</label>
+<div class="hr"><input id="stokIn" type="number" inputmode="numeric" min="0" placeholder="Contoh: 36"><button id="stokSave" type="button">Simpan</button></div>
+<div class="hr"><button id="stokPlus" type="button" style="flex:1;padding:10px">+ 1 karton (12 slop)</button></div>
+<div class="sm" id="stokMsg">1 karton = 12 slop. Stok berkurang otomatis saat pesanan diubah ke Diproses, dan kembali jika pesanan dikembalikan ke Baru atau dibatalkan.</div>
+</div>
+<input id="srch" placeholder="🔍 Cari nama, kode, atau no. WA" style="margin-top:12px">
 <div class="chips" id="chips"></div>
 <div class="sum"><span id="cnt"></span><span id="omz"></span></div>
+<div id="bulkWrap"></div>
 <div id="list"></div>
 </div>
 </div>
 
+<div id="edm" class="mod hide"><div class="card">
+<b>Ubah data pesanan</b>
+<label for="e_nama">Nama / usaha</label><input id="e_nama">
+<label for="e_hp">No. WhatsApp</label><input id="e_hp" type="tel">
+<label for="e_alamat">Alamat</label><input id="e_alamat">
+<label for="e_cat">Catatan</label><input id="e_cat">
+<div class="err" id="e_err"></div>
+<div class="hr"><button id="e_save" type="button" style="padding:12px">Simpan</button><button id="e_cancel" type="button" style="padding:12px;background:var(--inp);color:var(--ink);border:1px solid var(--line)">Batal</button></div>
+</div></div>
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import {getDatabase,ref,onValue,update,remove} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import {getDatabase,ref,onValue,update,remove,runTransaction} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import {getAuth,signInWithEmailAndPassword,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const app=initializeApp({
@@ -100,7 +125,8 @@ const $=id=>document.getElementById(id);
 const rp=n=>"Rp "+String(n||0).replace(/\B(?=(\d{3})+(?!\d))/g,".");
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const STS=["baru","diproses","dikirim","selesai","batal"];
-let data={},filter="semua",unsub=null,unsub2=null,hpp=380000,period="semua";
+let shown=[],search="";
+let data={},filter="semua",unsub=null,unsub2=null,hpp=380000,period="semua",stokVal=null;
 
 $("go").onclick=async()=>{
   $("lerr").textContent="";
@@ -119,7 +145,9 @@ onAuthStateChanged(auth,u=>{
   if(u){
     unsub=onValue(ref(db,"orders"),s=>{data=s.val()||{};render()},
       e=>{$("list").innerHTML='<div class="empty">Akses ditolak. Periksa aturan (rules) Realtime Database.</div>'});
-    unsub2=onValue(ref(db,"settings/hppKarton"),s=>{hpp=Number(s.val())||380000;$("hpp").value=hpp;render()},()=>{});
+    {const a1=onValue(ref(db,"settings/hppKarton"),s=>{hpp=Number(s.val())||380000;$("hpp").value=hpp;render()},()=>{});
+    const a2=onValue(ref(db,"stok/slop"),s=>{stokVal=s.val()==null?null:Number(s.val());renderStok()},()=>{});
+    unsub2=()=>{a1();a2()}}
   }else data={};
 });
 
@@ -127,7 +155,9 @@ function render(){
   const all=Object.entries(data).map(([id,o])=>({id,...o})).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
   const cnt=s=>s==="semua"?all.length:all.filter(o=>o.status===s).length;
   $("chips").innerHTML=["semua",...STS].map(s=>`<button class="chip ${filter===s?"on":""}" data-f="${s}">${s[0].toUpperCase()+s.slice(1)} (${cnt(s)})</button>`).join("");
-  const rows=all.filter(o=>filter==="semua"||o.status===filter);
+  const rows=all.filter(o=>filter==="semua"||o.status===filter).filter(o=>!search||[o.nama,o.kode,o.hp].join(" ").toLowerCase().includes(search));
+  shown=rows;
+  $("bulkWrap").innerHTML=(filter==="selesai"||filter==="batal")&&rows.length?`<button class="bulkbtn" id="bulk">🗑 Hapus semua pesanan ${filter} yang tampil (${rows.length})</button>`:"";
   $("cnt").textContent=rows.length+" pesanan";
   $("omz").textContent="Total: "+rp(rows.filter(o=>o.status!=="batal").reduce((a,o)=>a+(o.total||0),0));
   $("list").innerHTML=rows.length?rows.map(card).join(""):'<div class="empty">Belum ada pesanan.</div>';
@@ -173,6 +203,20 @@ $("hppSave").onclick=async()=>{
   try{await update(ref(db,"settings"),{hppKarton:v});$("hppMsg").textContent="Tersimpan. Berlaku untuk pesanan yang diselesaikan berikutnya."}
   catch(e){$("hppMsg").textContent="Gagal menyimpan. Periksa aturan database untuk settings."}
 };
+function renderStok(){
+  $("stokInfo").innerHTML=stokVal==null?'<div class="sm">Stok belum diatur. Isi jumlah stok lalu Simpan. Selama belum diatur, pelanggan tidak dibatasi stok.</div>':
+  `<div class="tiles"><div class="tile big"><small>Stok tersedia</small><b>${stokVal} slop</b> <small style="display:inline">≈ ${Math.floor(stokVal/12)} karton + ${stokVal%12} slop</small></div></div>`;
+}
+$("stokSave").onclick=async()=>{
+  const raw=$("stokIn").value,v=Math.floor(Number(raw));
+  if(raw===""||!(v>=0)){$("stokMsg").textContent="Isi jumlah stok dengan angka 0 atau lebih.";return}
+  try{await update(ref(db,"stok"),{slop:v});$("stokIn").value="";$("stokMsg").textContent="Stok tersimpan."}
+  catch(e){$("stokMsg").textContent="Gagal menyimpan. Periksa aturan database untuk stok."}
+};
+$("stokPlus").onclick=async()=>{
+  try{await runTransaction(ref(db,"stok/slop"),c=>(Number(c)||0)+12);$("stokMsg").textContent="Ditambah 1 karton (12 slop)."}
+  catch(e){$("stokMsg").textContent="Gagal menambah stok. Periksa aturan database untuk stok."}
+};
 function mapLink(o){
   const l=o.lokasi;
   if(!l||!isFinite(l.lat)||!isFinite(l.lng))return "";
@@ -188,25 +232,72 @@ function card(o){
   <ul>${its.map(i=>`<li>${esc(i.nama)} (${esc(i.detail)}) × ${esc(i.qty)} — ${rp(i.subtotal)}</li>`).join("")}</ul>
   <div><b>Total ${rp(o.total)}</b></div>${profitLine(o)}
   <div style="font-size:14px;margin-top:6px;color:var(--mut)">📞 ${esc(o.hp)}<br>📍 ${esc(o.alamat)}${mapLink(o)}${o.catatan?`<br>📝 ${esc(o.catatan)}`:""}</div>
+  ${o.status==="selesai"?`<button class="donebtn undo" data-undo="${esc(o.id)}">↩ Tandai Belum Selesai</button>`:o.status==="batal"?"":`<button class="donebtn" data-done="${esc(o.id)}">✅ Tandai Selesai</button>`}
   <div class="row">
     <select data-id="${esc(o.id)}">${STS.map(s=>`<option ${s===o.status?"selected":""}>${s}</option>`).join("")}</select>
     <a class="wa" target="_blank" rel="noopener" href="https://wa.me/${hp}?text=${msg}">Chat WA</a>
+    <button data-edit="${esc(o.id)}">Ubah</button>
     <button class="del" data-del="${esc(o.id)}">Hapus</button>
   </div></div>`;
 }
 $("chips").addEventListener("click",e=>{const b=e.target.closest("[data-f]");if(b){filter=b.dataset.f;render()}});
-$("list").addEventListener("change",e=>{
-  const s=e.target.closest("select[data-id]");if(s){
-    const o=data[s.dataset.id]||{},upd={status:s.value};
-    if(s.value==="selesai"){upd.hpp=hppOrder(o,hpp);upd.profit=(o.total||0)-upd.hpp}
-    else{upd.hpp=null;upd.profit=null}
-    update(ref(db,"orders/"+s.dataset.id),upd);
+async function setStatus(id,st){
+  const o=data[id]||{},upd={status:st};
+  if(st==="selesai"){upd.hpp=hppOrder(o,hpp);upd.profit=(o.total||0)-upd.hpp}
+  else{upd.hpp=null;upd.profit=null}
+  const need=slops(o),commit=["diproses","dikirim","selesai"].includes(st);
+  let delta=0;
+  if(stokVal!=null){
+    if(commit&&!o.stokDipotong){
+      if(stokVal<need&&!confirm("Stok tersisa "+stokVal+" slop, kurang dari kebutuhan pesanan ("+need+" slop). Tetap proses?")){render();return}
+      delta=-need;upd.stokDipotong=true;
+    }else if(!commit&&o.stokDipotong){delta=need;upd.stokDipotong=null}
+  }
+  try{
+    if(delta)await runTransaction(ref(db,"stok/slop"),c=>Math.max(0,(Number(c)||0)+delta));
+    await update(ref(db,"orders/"+id),upd);
+  }catch(err){alert("Gagal menyimpan perubahan. Periksa koneksi atau aturan database.");render()}
+}
+$("list").addEventListener("change",e=>{const s=e.target.closest("select[data-id]");if(s)setStatus(s.dataset.id,s.value)});
+
+let editId=null;
+function openEdit(id){
+  const o=data[id];if(!o)return;editId=id;
+  $("e_nama").value=o.nama||"";$("e_hp").value=o.hp||"";$("e_alamat").value=o.alamat||"";$("e_cat").value=o.catatan||"";
+  $("e_err").textContent="";$("edm").classList.remove("hide");
+}
+$("e_cancel").onclick=()=>$("edm").classList.add("hide");
+$("e_save").onclick=async()=>{
+  const nama=$("e_nama").value.trim(),hp=$("e_hp").value.trim(),alamat=$("e_alamat").value.trim();
+  if(!nama||!hp||!alamat){$("e_err").textContent="Nama, no. WA, dan alamat wajib diisi.";return}
+  try{await update(ref(db,"orders/"+editId),{nama,hp,alamat,catatan:$("e_cat").value.trim()||null});$("edm").classList.add("hide")}
+  catch(e){$("e_err").textContent="Gagal menyimpan. Periksa koneksi."}
+};
+
+$("list").addEventListener("click",async e=>{
+  const d=e.target.closest("[data-done]");if(d){setStatus(d.dataset.done,"selesai");return}
+  const u=e.target.closest("[data-undo]");if(u){setStatus(u.dataset.undo,"diproses");return}
+  const ed=e.target.closest("[data-edit]");if(ed){openEdit(ed.dataset.edit);return}
+  const b=e.target.closest("[data-del]");
+  if(b){
+    const id=b.dataset.del,o=data[id]||{};
+    const warn=o.status==="selesai"?"\n\nPesanan selesai yang dihapus juga hilang dari laporan laba.":"";
+    if(!confirm("Hapus pesanan #"+(o.kode||"")+" ("+(o.nama||"")+") secara permanen?"+warn))return;
+    try{
+      if(stokVal!=null&&o.stokDipotong&&o.status!=="selesai")await runTransaction(ref(db,"stok/slop"),c=>(Number(c)||0)+slops(o));
+      await remove(ref(db,"orders/"+id));
+    }catch(err){alert("Gagal menghapus pesanan.")}
   }
 });
-$("list").addEventListener("click",e=>{
-  const b=e.target.closest("[data-del]");
-  if(b&&confirm("Hapus pesanan ini secara permanen?"))remove(ref(db,"orders/"+b.dataset.del));
+$("bulkWrap").addEventListener("click",async e=>{
+  if(!e.target.closest("#bulk"))return;
+  const n=shown.length;if(!n)return;
+  const warn=filter==="selesai"?"\n\nPesanan selesai yang dihapus juga hilang dari laporan laba.":"";
+  if(!confirm("Hapus "+n+" pesanan "+filter+" secara permanen?"+warn))return;
+  try{await update(ref(db),Object.fromEntries(shown.map(o=>["orders/"+o.id,null])))}
+  catch(err){alert("Gagal menghapus pesanan.")}
 });
+$("srch").addEventListener("input",e=>{search=e.target.value.trim().toLowerCase();render()});
 </script>
 </body>
 </html>

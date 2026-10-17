@@ -32,14 +32,19 @@ ul{margin:8px 0;padding-left:18px}
 .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .row button{flex:1;padding:11px 12px;border-radius:12px;border:1px solid var(--line);background:var(--inp);color:var(--ink);font:inherit;font-weight:600;cursor:pointer}
 .row button.wa{background:#25d366;color:#06310f;border:0;font-weight:800}
+.tabs{display:flex;gap:8px;margin-top:14px}
+.tab{flex:1;padding:10px 6px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.tab.on{background:var(--y);color:#3a2a00;border-color:var(--y)}
+.note2{font-size:14px;font-weight:700;margin-top:4px}
 .empty{text-align:center;color:var(--mut);padding:40px 10px}
 .empty a{display:inline-block;margin-top:14px;background:var(--y);color:#3a2a00;font-weight:800;padding:12px 20px;border-radius:12px;text-decoration:none}
 .note{font-size:13px;color:var(--mut);text-align:center;margin-top:18px}
 </style>
 </head>
 <body>
-<header><div class="in"><h1>📋 Pesanan Saya</h1><a href="order.html">+ Pesan Lagi</a></div></header>
+<header><div class="in"><h1>📋 Pesanan Saya</h1><a href="index.html">+ Pesan Lagi</a></div></header>
 <div class="wrap">
+<div class="tabs" id="tabs"></div>
 <div id="list"><div class="empty">Memuat pesanan...</div></div>
 <p class="note">Daftar ini tersimpan di perangkat yang Anda gunakan untuk memesan. Status diperbarui otomatis.</p>
 </div>
@@ -78,7 +83,7 @@ try{
   if(l&&l.id&&!a.some(x=>x.id===l.id)){a.unshift({id:l.id,kode:l.kode});save(a)}
 }catch(e){}
 
-let mine=load(),data={};
+let mine=load(),data={},tab="semua";
 const subs={};
 function watch(o){
   if(subs[o.id])return;
@@ -90,12 +95,14 @@ function card(o,m){
   const its=Object.values(o.items||{});
   const when=o.createdAt?new Date(o.createdAt).toLocaleString("id-ID",{dateStyle:"medium",timeStyle:"short"}):"-";
   const idx=STEPS.indexOf(o.status);
+  const note=o.status==="selesai"?"✅ Pesanan sudah selesai":o.status==="batal"?"❌ Pesanan dibatalkan":"⏳ Belum selesai · "+({baru:"menunggu konfirmasi admin",diproses:"sedang diproses",dikirim:"sedang dikirim"}[o.status]||"dalam proses");
   const steps=o.status==="batal"?"":`<div class="steps">${STEPS.map((s,i)=>`<div class="${i<=idx?"on":""}">${s[0].toUpperCase()+s.slice(1)}</div>`).join("")}</div>`;
   let loc="";
   if(o.lokasi&&isFinite(o.lokasi.lat)&&isFinite(o.lokasi.lng))loc="<br>📌 Lokasi dibagikan";
   return `<div class="card">
   <div class="top"><div><b>Pesanan #${esc(o.kode||m.kode)}</b><div class="kode">${esc(when)}</div></div><span class="st ${esc(o.status)}">${esc(o.status)}</span></div>
   ${steps}
+  <div class="note2">${note}</div>
   <ul>${its.map(i=>`<li>${esc(i.nama)} (${esc(i.detail)}) × ${esc(i.qty)} — ${rp(i.subtotal)}</li>`).join("")}</ul>
   <div><b>Total ${rp(o.total)}</b></div>
   <div class="info" style="margin-top:6px">📍 ${esc(o.alamat)}${loc}${o.catatan?`<br>📝 ${esc(o.catatan)}`:""}</div>
@@ -103,15 +110,20 @@ function card(o,m){
   </div>`;
 }
 function render(){
-  const rows=mine.map(m=>({m,o:data[m.id]})).filter(x=>x.o);
-  rows.sort((a,b)=>(b.o.createdAt||0)-(a.o.createdAt||0));
+  const all=mine.map(m=>({m,o:data[m.id]})).filter(x=>x.o);
+  all.sort((a,b)=>(b.o.createdAt||0)-(a.o.createdAt||0));
   const loading=mine.some(m=>!(m.id in data));
+  const run=x=>x.o.status!=="selesai"&&x.o.status!=="batal";
+  const cnt={semua:all.length,belum:all.filter(run).length,selesai:all.filter(x=>x.o.status==="selesai").length};
+  $("tabs").innerHTML=all.length?[["semua","Semua"],["belum","Belum Selesai"],["selesai","Selesai"]].map(([k,n])=>`<button class="tab ${tab===k?"on":""}" data-tab="${k}">${n} (${cnt[k]})</button>`).join(""):"";
+  const rows=all.filter(x=>tab==="semua"||(tab==="belum"?run(x):x.o.status==="selesai"));
   if(!rows.length){
-    $("list").innerHTML=loading?'<div class="empty">Memuat pesanan...</div>':'<div class="empty">Belum ada pesanan di perangkat ini.<br><a href="order.html">Buat pesanan</a></div>';
+    $("list").innerHTML=all.length?'<div class="empty">Tidak ada pesanan di tab ini.</div>':(loading?'<div class="empty">Memuat pesanan...</div>':'<div class="empty">Belum ada pesanan di perangkat ini.<br><a href="index.html">Buat pesanan</a></div>');
     return;
   }
   $("list").innerHTML=rows.map(x=>card(x.o,x.m)).join("");
 }
+$("tabs").addEventListener("click",e=>{const b=e.target.closest("[data-tab]");if(b){tab=b.dataset.tab;render()}});
 $("list").addEventListener("click",e=>{
   const w=e.target.closest("[data-wa]");
   if(w){
