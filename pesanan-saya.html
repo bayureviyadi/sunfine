@@ -42,7 +42,7 @@ ul{margin:8px 0;padding-left:18px}
 </style>
 </head>
 <body>
-<header><div class="in"><h1>📋 Pesanan Saya</h1><a href="index.html">+ Pesan Lagi</a></div></header>
+<header><div class="in"><h1>📋 Pesanan Saya</h1><a href="pesan.html">+ Pesan Lagi</a></div></header>
 <div class="wrap">
 <div class="tabs" id="tabs"></div>
 <div id="list"><div class="empty">Memuat pesanan...</div></div>
@@ -118,7 +118,7 @@ function render(){
   $("tabs").innerHTML=all.length?[["semua","Semua"],["belum","Belum Selesai"],["selesai","Selesai"]].map(([k,n])=>`<button class="tab ${tab===k?"on":""}" data-tab="${k}">${n} (${cnt[k]})</button>`).join(""):"";
   const rows=all.filter(x=>tab==="semua"||(tab==="belum"?run(x):x.o.status==="selesai"));
   if(!rows.length){
-    $("list").innerHTML=all.length?'<div class="empty">Tidak ada pesanan di tab ini.</div>':(loading?'<div class="empty">Memuat pesanan...</div>':'<div class="empty">Belum ada pesanan di perangkat ini.<br><a href="index.html">Buat pesanan</a></div>');
+    $("list").innerHTML=all.length?'<div class="empty">Tidak ada pesanan di tab ini.</div>':(loading?'<div class="empty">Memuat pesanan...</div>':'<div class="empty">Belum ada pesanan di perangkat ini.<br><a href="pesan.html">Buat pesanan</a></div>');
     return;
   }
   $("list").innerHTML=rows.map(x=>card(x.o,x.m)).join("");

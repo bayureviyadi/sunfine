@@ -5,22 +5,20 @@
 <!-- viewport-fit=cover: konten tetap rapi di iPhone berponi -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1a1a1a">
-<title>SUNFINE Tape – Premium Quality</title>
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<title>Lakban Bening SUNFINE – Supplier B2B &amp; Grosir</title>
+<meta name="description" content="Lakban Bening SUNFINE 70 Yard. Solusi packing hemat dan kuat untuk usaha Anda. Pesan eceran, paket hemat, atau grosir.">
 
 <style>
-  /* ---------- Token desain ---------- */
+  /* ---------- Token desain (warna & font disamakan dengan halaman pemesanan) ---------- */
   :root {
     --charcoal: #1a1a1a;          /* background halaman */
-    --paper:    #f4efe4;          /* teks utama (putih hangat, selaras warna tape) */
+    --paper:    #f4efe4;          /* teks utama */
     --muted:    #c9c3b4;          /* teks pendukung */
-    --sun:      #f4b81d;          /* kuning logo SUNFINE, dipakai hanya untuk indikator scroll */
+    --g:        #0f5c35;          /* hijau SUNFINE (sama dengan halaman pemesanan) */
+    --y:        #fcb824;          /* kuning SUNFINE (sama dengan halaman pemesanan) */
+    --ink-y:    #3a2a00;          /* teks di atas tombol kuning */
     --pad:      clamp(20px, 6vw, 96px);
-    --serif:    "Instrument Serif", "Iowan Old Style", Georgia, serif;
-    --sans:     "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --sans:     system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   }
 
   *, *::before, *::after { box-sizing: border-box; }
@@ -32,6 +30,7 @@
     background: var(--charcoal);
     color: var(--paper);
     font-family: var(--sans);
+    line-height: 1.45;
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
   }
@@ -59,19 +58,16 @@
     object-fit: cover;            /* ganti ke "contain" bila ingin seluruh frame terlihat */
     object-position: center;
     pointer-events: none;
-    opacity: 0;
-    transition: opacity .6s ease;
   }
-  .stage video.is-ready { opacity: 1; }
 
-  /* Vignette: menyatukan tepi video dengan warna #1a1a1a, plus scrim agar teks terbaca */
+  /* Vignette: menyatukan tepi video dengan #1a1a1a, plus scrim agar teks terbaca */
   .stage::after {
     content: "";
     position: absolute;
     inset: 0;
     pointer-events: none;
     background:
-      linear-gradient(to top, rgba(26,26,26,.88) 0%, rgba(26,26,26,0) 48%),
+      linear-gradient(to top, rgba(26,26,26,.9) 0%, rgba(26,26,26,0) 50%),
       radial-gradient(ellipse at center, rgba(26,26,26,0) 52%, rgba(26,26,26,.92) 100%);
   }
 
@@ -84,43 +80,53 @@
     bottom: calc(clamp(40px, 9vh, 96px) + env(safe-area-inset-bottom, 0px));
     max-width: 38rem;
     opacity: 0;                   /* diatur oleh JavaScript berdasarkan posisi scroll */
+    visibility: hidden;
     will-change: opacity, transform;
     text-shadow: 0 2px 24px rgba(26,26,26,.55);
   }
 
-  .beat h2, .beat h1 {
+  .beat h1, .beat h2 {
     margin: 0;
-    font-family: var(--serif);
-    font-weight: 400;
-    line-height: .95;
-    letter-spacing: -.015em;
-    font-size: clamp(2.9rem, 10.5vw, 7.5rem);
+    font-weight: 900;             /* sama dengan judul di halaman pemesanan */
+    line-height: .98;
+    letter-spacing: -.025em;
+    font-size: clamp(2.6rem, 10vw, 6.5rem);
   }
 
   .beat p {
-    margin: 1.1rem 0 0;
+    margin: 1rem 0 0;
     max-width: 28rem;
-    font-size: clamp(.98rem, 2.4vw, 1.15rem);
-    font-weight: 300;
-    line-height: 1.55;
+    font-size: clamp(1rem, 2.4vw, 1.2rem);
+    line-height: 1.5;
     color: var(--muted);
   }
 
   /* Judul pembuka dibuat paling besar: satu-satunya momen "berani" di halaman ini */
   .beat--hero { max-width: none; }
   .beat--hero h1 {
-    font-size: clamp(3.6rem, 17vw, 14rem);
+    font-size: clamp(3.4rem, 16vw, 13rem);
     line-height: .88;
-    letter-spacing: -.03em;
+    letter-spacing: -.04em;
+  }
+
+  /* Lencana: gaya yang sama dengan .badge di halaman pemesanan */
+  .badge {
+    display: inline-block;
+    margin-top: 1.4rem;
+    background: rgba(0,0,0,.4);
+    padding: 6px 14px;
+    border-radius: 99px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--paper);
   }
 
   .hint {
-    margin-top: 2rem;
+    margin-top: 1.6rem;
     display: flex;
     align-items: center;
     gap: .9rem;
     font-size: .95rem;
-    font-weight: 400;
     color: var(--muted);
   }
   .hint i {
@@ -133,11 +139,47 @@
   }
   @keyframes hint { 0%,100% { transform: scaleX(.35); } 50% { transform: scaleX(1); } }
 
+  /* ---------- Tombol (gaya pil seperti tombol "Pesanan Saya" di halaman pemesanan) ---------- */
+  .actions { margin-top: 1.6rem; display: flex; flex-wrap: wrap; gap: 10px; }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 22px;
+    border-radius: 99px;
+    font: inherit;
+    font-size: 16px;
+    font-weight: 800;
+    text-decoration: none;
+    white-space: nowrap;
+    text-shadow: none;
+  }
+  .btn--main { background: var(--y); color: var(--ink-y); box-shadow: 0 4px 14px rgba(0,0,0,.35); }
+  .btn--ghost { background: rgba(0,0,0,.4); color: var(--paper); }
+  .btn:focus-visible, .skip:focus-visible { outline: 3px solid var(--paper); outline-offset: 3px; }
+
+  /* Tautan cepat di pojok kanan atas, untuk pelanggan yang langsung ingin memesan */
+  .skip {
+    position: fixed;
+    z-index: 5;
+    top: calc(14px + env(safe-area-inset-top, 0px));
+    right: max(14px, env(safe-area-inset-right, 0px));
+    padding: 9px 16px;
+    border-radius: 99px;
+    background: var(--y);
+    color: var(--ink-y);
+    font-size: 14px;
+    font-weight: 800;
+    text-decoration: none;
+    box-shadow: 0 4px 14px rgba(0,0,0,.35);
+  }
+
   /* Tata letak desktop: teks berpindah sisi mengikuti posisi produk di video */
   @media (min-width: 900px) {
-    .beat--left  { top: 50%; bottom: auto; margin-top: -9rem; }
+    .beat--left  { top: 50%; bottom: auto; margin-top: -8rem; }
     .beat--right { top: 50%; bottom: auto; margin-top: -9rem; left: auto; text-align: right; }
     .beat--right p { margin-left: auto; }
+    .beat--right .actions { justify-content: flex-end; }
   }
 
   /* ---------- Indikator posisi scroll ---------- */
@@ -156,7 +198,7 @@
     display: block;
     width: 100%;
     height: 100%;
-    background: var(--sun);
+    background: var(--y);
     transform-origin: top;
     transform: scaleY(0);
   }
@@ -171,7 +213,6 @@
     padding: var(--pad);
     text-align: center;
     color: var(--muted);
-    font-size: 1rem;
     line-height: 1.6;
   }
   .notice.is-visible { display: grid; }
@@ -179,12 +220,13 @@
 
   @media (prefers-reduced-motion: reduce) {
     .hint i { animation: none; }
-    .stage video { transition: none; }
   }
 </style>
 </head>
 
 <body>
+
+  <a class="skip" href="pesan.html">Langsung pesan</a>
 
   <!-- Elemen yang membuat halaman bisa di-scroll -->
   <div class="scroll-track" aria-hidden="true"></div>
@@ -192,7 +234,7 @@
   <div class="stage">
     <!-- muted + playsinline + preload="auto" wajib agar bisa dikontrol lewat JS di semua browser (termasuk iOS).
          Sumber video (src) diisi dari JavaScript: lihat CONFIG.VIDEO_SRC di bawah. -->
-    <video id="scrub" muted playsinline preload="auto" disablepictureinpicture tabindex="-1" aria-hidden="true"></video>
+    <video id="scrub" muted playsinline preload="auto" poster="sunfine-poster.jpg" disablepictureinpicture tabindex="-1" aria-hidden="true"></video>
 
     <div class="notice" id="notice" role="status">
       <p>Video tidak ditemukan.<br>Pastikan file <code id="noticeName">sunfine-tape.mp4</code> berada satu folder dengan index.html.</p>
@@ -201,23 +243,27 @@
     <!-- Teks muncul/menghilang sesuai data-start dan data-end (0 = atas halaman, 1 = bawah halaman) -->
     <section class="beat beat--hero" data-start="0" data-end="0.17">
       <h1>SUNFINE Tape</h1>
-      <p>Lakban bening untuk kemasan yang rapi dan aman.</p>
+      <span class="badge">Lakban Bening SUNFINE (70 Yard)</span>
       <div class="hint"><i></i><span>Gulir untuk melihat lebih dekat</span></div>
     </section>
 
     <section class="beat beat--left" data-start="0.21" data-end="0.41">
       <h2>Premium Quality</h2>
-      <p>Bahan dipilih dan diperiksa agar hasilnya konsisten di setiap gulungan.</p>
+      <p>Solusi packing hemat dan kuat untuk usaha Anda.</p>
     </section>
 
     <section class="beat beat--bottom" data-start="0.47" data-end="0.69">
       <h2>Clear &amp; Strong</h2>
-      <p>Bening dan menempel kuat, sehingga paket tertutup rapi dari awal sampai tujuan.</p>
+      <p>Lakban bening 70 yard, rapi menutup kardus dari gudang sampai tujuan.</p>
     </section>
 
     <section class="beat beat--right" data-start="0.77" data-end="1">
-      <h2>Siap untuk setiap paket</h2>
-      <p>SUNFINE Tape, pilihan perekat untuk kebutuhan kemasan sehari-hari.</p>
+      <h2>Supplier lakban B2B &amp; grosir</h2>
+      <p>Pilih eceran, paket hemat, atau grosir satu karton.</p>
+      <div class="actions">
+        <a class="btn btn--main" href="pesan.html">Pesan sekarang</a>
+        <a class="btn btn--ghost" href="pesanan-saya.html">Pesanan saya</a>
+      </div>
     </section>
   </div>
 
@@ -274,7 +320,6 @@
 
   const onMeta = () => {
     duration = video.duration || 0;
-    video.classList.add('is-ready');
     unlockVideo();
   };
   if (video.readyState >= 1) onMeta();
@@ -323,8 +368,9 @@
       const fadeOut = b.end   >= 1 ? 0 : smooth(b.end - f, b.end, p);
       const opacity = fadeIn * (1 - fadeOut);
       const shift   = reduceMotion ? 0 : (1 - fadeIn) * 28 - fadeOut * 28;
-      b.el.style.opacity   = opacity.toFixed(3);
-      b.el.style.transform = `translate3d(0, ${shift.toFixed(1)}px, 0)`;
+      b.el.style.opacity    = opacity.toFixed(3);
+      b.el.style.transform  = `translate3d(0, ${shift.toFixed(1)}px, 0)`;
+      // visibility:hidden mencegah tombol yang sedang tak terlihat ikut bisa diklik
       b.el.style.visibility = opacity < 0.01 ? 'hidden' : 'visible';
     }
     railFill.style.transform = `scaleY(${p.toFixed(4)})`;
