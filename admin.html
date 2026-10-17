@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Admin Pesanan – Lakban Sunfine</title>
+<style>
+:root{--bg:#f4f7f2;--card:#fff;--ink:#12301f;--mut:#5b6e61;--g:#0f5c35;--g2:#0a4426;--y:#fcb824;--line:#d9e3dc;--inp:#fff}
+@media (prefers-color-scheme:dark){:root{--bg:#0c1a12;--card:#13271b;--ink:#eef5f0;--mut:#9db3a4;--line:#254232;--inp:#0f2016}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.45;padding-bottom:env(safe-area-inset-bottom,0px)}
+.wrap{max-width:760px;margin:0 auto;padding:0 14px 40px}
+header{background:linear-gradient(160deg,var(--g2),var(--g));color:#fff;padding:calc(16px + env(safe-area-inset-top,0px)) 16px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+header h1{margin:0;font-size:18px}
+header button{background:rgba(0,0,0,.3);color:#fff;border:0;padding:8px 14px;border-radius:10px;font-weight:600;cursor:pointer}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-top:12px}
+label{display:block;font-size:14px;font-weight:600;margin:10px 0 5px}
+input,select{width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--inp);color:var(--ink);font:inherit}
+.btn{border:0;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer;background:var(--y);color:#3a2a00;font:inherit;font-weight:700}
+.btn.full{width:100%;margin-top:14px}
+.err{color:#d33;font-size:13px;min-height:16px;margin-top:8px}
+.hide{display:none}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:14px 0 2px}
+.chip{flex:none;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:8px 14px;border-radius:99px;font-weight:600;cursor:pointer;font:inherit;font-weight:600}
+.chip.on{background:var(--y);color:#3a2a00;border-color:var(--y)}
+.top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.top b{font-size:16px}
+.kode{font-size:12px;color:var(--mut)}
+.st{padding:3px 10px;border-radius:99px;font-size:12px;font-weight:800;text-transform:uppercase;white-space:nowrap}
+.st.baru{background:#fcb824;color:#3a2a00}.st.diproses{background:#3b82f6;color:#fff}.st.dikirim{background:#8b5cf6;color:#fff}.st.selesai{background:#16a34a;color:#fff}.st.batal{background:#9ca3af;color:#fff}
+ul{margin:8px 0;padding-left:18px}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.row select{flex:1;min-width:130px;padding:10px}
+.row a,.row button{padding:10px 14px;border-radius:12px;border:1px solid var(--line);background:var(--inp);color:var(--ink);font:inherit;font-weight:600;text-decoration:none;cursor:pointer}
+.row a.wa{background:#25d366;color:#06310f;border:0}
+.row button.del{color:#d33}
+.sum{display:flex;justify-content:space-between;margin-top:14px;color:var(--mut);font-size:14px}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.tile{background:var(--inp);border:1px solid var(--line);border-radius:12px;padding:10px}
+.tile small{display:block;color:var(--mut);font-size:12px}
+.tile b{font-size:16px}
+.tile.big{grid-column:1/-1;border-color:var(--y)}
+.tile.big b{font-size:22px}
+.alo{margin-top:10px;font-size:13px}
+.alo .bar{height:8px;border-radius:99px;background:var(--line);overflow:hidden;margin:3px 0 8px}
+.alo .bar i{display:block;height:100%;background:var(--y)}
+.alo .l{display:flex;justify-content:space-between;gap:8px}
+.hr{display:flex;gap:8px;margin-top:10px}
+.hr input{flex:1}
+.hr button{border:0;border-radius:12px;padding:0 16px;font-weight:700;background:var(--y);color:#3a2a00;cursor:pointer}
+.sm{font-size:12px;color:var(--mut);margin-top:6px}
+.pl{font-size:13px;margin-top:6px;padding:6px 10px;border-radius:10px;background:var(--inp);border:1px dashed var(--line)}
+.empty{text-align:center;color:var(--mut);padding:30px 0}
+</style>
+</head>
+<body>
+<header><h1>📦 Admin Pesanan Lakban</h1><button id="out" class="hide">Keluar</button></header>
+<div class="wrap">
+
+<div class="card" id="login">
+<b>Masuk admin</b>
+<label for="em">Email</label><input id="em" type="email" autocomplete="username">
+<label for="pw">Kata sandi</label><input id="pw" type="password" autocomplete="current-password">
+<div class="err" id="lerr"></div>
+<button class="btn full" id="go">Masuk</button>
+</div>
+
+<div id="panel" class="hide">
+<div class="card" id="rep">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><b>💰 Laporan Laba</b>
+<select id="per" style="width:auto;padding:8px 10px"><option value="semua">Semua waktu</option><option value="hari">Hari ini</option><option value="7">7 hari terakhir</option><option value="bulan">Bulan ini</option></select></div>
+<div id="repBody"></div>
+<label for="hpp">Modal beli per karton (72 roll / 12 slop)</label>
+<div class="hr"><input id="hpp" type="number" inputmode="numeric" min="1" value="380000"><button id="hppSave" type="button">Simpan</button></div>
+<div class="sm" id="hppMsg"></div>
+</div>
+<div class="chips" id="chips"></div>
+<div class="sum"><span id="cnt"></span><span id="omz"></span></div>
+<div id="list"></div>
+</div>
+</div>
+
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {getDatabase,ref,onValue,update,remove} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import {getAuth,signInWithEmailAndPassword,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const app=initializeApp({
+  apiKey:"AIzaSyDqfCI_ZQzbhvvPQsVYHEMuFlhCyao5AYU",
+  authDomain:"lakban-16dc4.firebaseapp.com",
+  databaseURL:"https://lakban-16dc4-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"lakban-16dc4",
+  storageBucket:"lakban-16dc4.firebasestorage.app",
+  messagingSenderId:"227042957618",
+  appId:"1:227042957618:web:bed02a4101b598380b1f2b"
+});
+const db=getDatabase(app),auth=getAuth(app);
+const $=id=>document.getElementById(id);
+const rp=n=>"Rp "+String(n||0).replace(/\B(?=(\d{3})+(?!\d))/g,".");
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const STS=["baru","diproses","dikirim","selesai","batal"];
+let data={},filter="semua",unsub=null,unsub2=null,hpp=380000,period="semua";
+
+$("go").onclick=async()=>{
+  $("lerr").textContent="";
+  try{await signInWithEmailAndPassword(auth,$("em").value.trim(),$("pw").value)}
+  catch(e){$("lerr").textContent="Email atau kata sandi salah."}
+};
+$("pw").addEventListener("keydown",e=>{if(e.key==="Enter")$("go").click()});
+$("out").onclick=()=>signOut(auth);
+
+onAuthStateChanged(auth,u=>{
+  $("login").classList.toggle("hide",!!u);
+  $("panel").classList.toggle("hide",!u);
+  $("out").classList.toggle("hide",!u);
+  if(unsub){unsub();unsub=null}
+  if(unsub2){unsub2();unsub2=null}
+  if(u){
+    unsub=onValue(ref(db,"orders"),s=>{data=s.val()||{};render()},
+      e=>{$("list").innerHTML='<div class="empty">Akses ditolak. Periksa aturan (rules) Realtime Database.</div>'});
+    unsub2=onValue(ref(db,"settings/hppKarton"),s=>{hpp=Number(s.val())||380000;$("hpp").value=hpp;render()},()=>{});
+  }else data={};
+});
+
+function render(){
+  const all=Object.entries(data).map(([id,o])=>({id,...o})).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  const cnt=s=>s==="semua"?all.length:all.filter(o=>o.status===s).length;
+  $("chips").innerHTML=["semua",...STS].map(s=>`<button class="chip ${filter===s?"on":""}" data-f="${s}">${s[0].toUpperCase()+s.slice(1)} (${cnt(s)})</button>`).join("");
+  const rows=all.filter(o=>filter==="semua"||o.status===filter);
+  $("cnt").textContent=rows.length+" pesanan";
+  $("omz").textContent="Total: "+rp(rows.filter(o=>o.status!=="batal").reduce((a,o)=>a+(o.total||0),0));
+  $("list").innerHTML=rows.length?rows.map(card).join(""):'<div class="empty">Belum ada pesanan.</div>';
+  renderReport(all);
+}
+const SL={eceran:1,hemat:2,grosir:12};
+const ALO=[["Tabungan ekspansi (re-investasi stok)",40/88],["Operasional (bensin & transport)",20/88],["Take home pay (komisi)",28/88]];
+const pct=n=>n.toFixed(1).replace(".",",")+"%";
+const slops=o=>Object.values(o.items||{}).reduce((x,i)=>x+(SL[i.id]||0)*(Number(i.qty)||0),0);
+const hppOrder=(o,h)=>Math.round(slops(o)*h/12);
+function calc(o){const h=o.hpp!=null?o.hpp:hppOrder(o,hpp);return{h,p:(o.total||0)-h}}
+function inPeriod(o){
+  if(period==="semua")return true;
+  const t=o.createdAt||0,n=new Date();
+  if(period==="hari")return t>=new Date(n.getFullYear(),n.getMonth(),n.getDate()).getTime();
+  if(period==="7")return t>=Date.now()-7*864e5;
+  if(period==="bulan")return t>=new Date(n.getFullYear(),n.getMonth(),1).getTime();
+  return true;
+}
+function profitLine(o){
+  if(o.status==="batal")return "";
+  const c=calc(o),m=o.total?c.p/o.total*100:0;
+  return `<div class="pl">Modal ${rp(c.h)} · ${o.hpp!=null?"Laba":"Estimasi laba"} <b>${rp(c.p)}</b> (${pct(m)})</div>`;
+}
+function renderReport(all){
+  const r=all.filter(inPeriod);
+  const done=r.filter(o=>o.status==="selesai"),pend=r.filter(o=>["baru","diproses","dikirim"].includes(o.status));
+  const omz=done.reduce((x,o)=>x+(o.total||0),0),mod=done.reduce((x,o)=>x+calc(o).h,0),lab=omz-mod;
+  const est=pend.reduce((x,o)=>x+calc(o).p,0),mg=omz?lab/omz*100:0;
+  $("repBody").innerHTML=`<div class="tiles">
+    <div class="tile big"><small>Laba kotor (pesanan selesai: ${done.length})</small><b>${rp(lab)}</b> <small style="display:inline">margin ${pct(mg)}</small></div>
+    <div class="tile"><small>Omzet</small><b>${rp(omz)}</b></div>
+    <div class="tile"><small>Modal (HPP)</small><b>${rp(mod)}</b></div>
+    <div class="tile"><small>Estimasi laba berjalan (${pend.length} pesanan)</small><b>${rp(est)}</b></div>
+    <div class="tile"><small>Modal per slop</small><b>${rp(Math.round(hpp/12))}</b></div>
+  </div>
+  <div class="alo"><b>Alokasi laba kotor</b>${ALO.map(([n,s])=>`<div class="l" style="margin-top:6px"><span>${n}</span><span><b>${rp(Math.round(lab*s))}</b> · ${pct(s*100)}</span></div><div class="bar"><i style="width:${(s*100).toFixed(1)}%"></i></div>`).join("")}</div>`;
+}
+$("per").onchange=e=>{period=e.target.value;render()};
+$("hppSave").onclick=async()=>{
+  const v=Math.round(Number($("hpp").value));
+  if(!(v>0)){$("hppMsg").textContent="Isi modal per karton dengan angka yang benar.";return}
+  try{await update(ref(db,"settings"),{hppKarton:v});$("hppMsg").textContent="Tersimpan. Berlaku untuk pesanan yang diselesaikan berikutnya."}
+  catch(e){$("hppMsg").textContent="Gagal menyimpan. Periksa aturan database untuk settings."}
+};
+function mapLink(o){
+  const l=o.lokasi;
+  if(!l||!isFinite(l.lat)||!isFinite(l.lng))return "";
+  return `<br>📌 <a target="_blank" rel="noopener" href="https://www.google.com/maps?q=${Number(l.lat)},${Number(l.lng)}" style="color:var(--g);font-weight:700">Buka lokasi di Maps</a>`;
+}
+function card(o){
+  const its=Object.values(o.items||{});
+  let hp=String(o.hp||"").replace(/\D/g,"");if(hp.startsWith("0"))hp="62"+hp.slice(1);
+  const when=o.createdAt?new Date(o.createdAt).toLocaleString("id-ID",{dateStyle:"medium",timeStyle:"short"}):"-";
+  const msg=encodeURIComponent(`Halo ${o.nama}, pesanan Anda (kode ${o.kode}) status: ${o.status}. Terima kasih.`);
+  return `<div class="card">
+  <div class="top"><div><b>${esc(o.nama)}</b><div class="kode">#${esc(o.kode)} · ${esc(when)}</div></div><span class="st ${esc(o.status)}">${esc(o.status)}</span></div>
+  <ul>${its.map(i=>`<li>${esc(i.nama)} (${esc(i.detail)}) × ${esc(i.qty)} — ${rp(i.subtotal)}</li>`).join("")}</ul>
+  <div><b>Total ${rp(o.total)}</b></div>${profitLine(o)}
+  <div style="font-size:14px;margin-top:6px;color:var(--mut)">📞 ${esc(o.hp)}<br>📍 ${esc(o.alamat)}${mapLink(o)}${o.catatan?`<br>📝 ${esc(o.catatan)}`:""}</div>
+  <div class="row">
+    <select data-id="${esc(o.id)}">${STS.map(s=>`<option ${s===o.status?"selected":""}>${s}</option>`).join("")}</select>
+    <a class="wa" target="_blank" rel="noopener" href="https://wa.me/${hp}?text=${msg}">Chat WA</a>
+    <button class="del" data-del="${esc(o.id)}">Hapus</button>
+  </div></div>`;
+}
+$("chips").addEventListener("click",e=>{const b=e.target.closest("[data-f]");if(b){filter=b.dataset.f;render()}});
+$("list").addEventListener("change",e=>{
+  const s=e.target.closest("select[data-id]");if(s){
+    const o=data[s.dataset.id]||{},upd={status:s.value};
+    if(s.value==="selesai"){upd.hpp=hppOrder(o,hpp);upd.profit=(o.total||0)-upd.hpp}
+    else{upd.hpp=null;upd.profit=null}
+    update(ref(db,"orders/"+s.dataset.id),upd);
+  }
+});
+$("list").addEventListener("click",e=>{
+  const b=e.target.closest("[data-del]");
+  if(b&&confirm("Hapus pesanan ini secara permanen?"))remove(ref(db,"orders/"+b.dataset.del));
+});
+</script>
+</body>
+</html>

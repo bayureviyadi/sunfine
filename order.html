@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pesan Lakban Sunfine – B2B & Grosir</title>
+<style>
+:root{--bg:#f4f7f2;--card:#fff;--ink:#12301f;--mut:#5b6e61;--g:#0f5c35;--g2:#0a4426;--y:#fcb824;--line:#d9e3dc;--inp:#fff;--pr:#0f5c35}
+@media (prefers-color-scheme:dark){:root{--bg:#0c1a12;--card:#13271b;--ink:#eef5f0;--mut:#9db3a4;--line:#254232;--inp:#0f2016;--pr:#fcb824}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.45;padding-bottom:env(safe-area-inset-bottom,0px)}
+.wrap{max-width:560px;margin:0 auto;padding:0 16px 90px}
+header{background:linear-gradient(160deg,var(--g2),var(--g));color:#fff;padding:calc(28px + env(safe-area-inset-top,0px)) 16px 32px;text-align:center;border-radius:0 0 28px 28px}
+header h1{margin:0;font-size:clamp(26px,8vw,36px);line-height:1.1;font-weight:900}
+header h1 span{color:var(--y)}
+header p{margin:10px 0 0}
+.badge{display:inline-block;margin-top:14px;background:rgba(0,0,0,.28);padding:6px 14px;border-radius:99px;font-size:14px;font-weight:600}
+h2{font-size:18px;margin:26px 0 10px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
+.pk{display:flex;align-items:center;gap:12px}.pk .i{flex:1}.pk b{display:block}.pk small{color:var(--mut)}
+.price{color:var(--pr);font-weight:800;font-size:18px}
+.tag{background:var(--y);color:#3a2a00;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;margin-left:6px}
+.qty{display:flex;align-items:center;gap:6px}
+.qty button{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--inp);color:var(--ink);font-size:20px;font-weight:700;cursor:pointer}
+.qty output{min-width:26px;text-align:center;font-weight:700}
+label{display:block;font-size:14px;font-weight:600;margin:12px 0 5px}
+input,textarea{width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--inp);color:var(--ink);font:inherit}
+input:focus,textarea:focus{outline:2px solid var(--y)}
+.err{color:#d33;font-size:13px;min-height:16px;margin-top:6px}
+.total{display:flex;justify-content:space-between;font-size:17px;font-weight:800}
+.send{width:100%;margin-top:14px;padding:16px;border:0;border-radius:14px;background:#25d366;color:#06310f;font-size:17px;font-weight:800;cursor:pointer}
+.send:disabled{opacity:.6}
+.note{font-size:13px;color:var(--mut);text-align:center;margin-top:12px}
+.stat{border:2px solid var(--y)}
+.stat .st{display:inline-block;padding:4px 12px;border-radius:99px;background:var(--y);color:#3a2a00;font-weight:800;text-transform:uppercase;font-size:13px}
+.stat a{color:var(--pr);font-weight:700}
+.btn2{width:100%;padding:12px;border-radius:12px;border:1px dashed var(--g);background:var(--inp);color:var(--ink);font:inherit;font-weight:600;cursor:pointer}
+.dock{position:fixed;left:12px;right:12px;bottom:calc(14px + env(safe-area-inset-bottom,0px));display:flex;justify-content:flex-end;gap:10px;z-index:20}
+.fab,.cart{display:flex;align-items:center;gap:7px;background:#25d366;color:#06310f;border:0;font:inherit;font-size:14px;cursor:pointer;font-weight:800;padding:12px 15px;border-radius:99px;box-shadow:0 4px 14px rgba(0,0,0,.3);text-decoration:none;white-space:nowrap}
+.cart{background:var(--y);color:#3a2a00}
+.navl{display:inline-block;margin-top:12px;color:#fff;font-weight:700;text-decoration:none;background:rgba(0,0,0,.28);padding:8px 16px;border-radius:99px}
+.hide{display:none}
+</style>
+</head>
+<body>
+<header>
+<h1>SUPPLIER LAKBAN<br><span>B2B & GROSIR</span></h1>
+<p>Solusi packing hemat & kuat untuk usaha Anda!</p>
+<span class="badge">Lakban Bening SUNFINE (70 Yard)</span>
+</header>
+<div class="wrap">
+
+<div class="card stat hide" id="stat" style="margin-top:18px">
+<div style="font-size:13px;color:var(--mut)">Pesanan terakhir Anda · Kode <b id="sKode"></b></div>
+<div style="margin:8px 0"><span class="st" id="sSt">-</span></div>
+<button type="button" class="btn2" id="sWa">Buka chat WhatsApp</button>
+</div>
+
+<h2>1. Pilih paket</h2>
+<div id="pkgs"></div>
+<div class="note" style="margin-top:-4px">1 karton isi 72 roll / 12 slop</div>
+
+<h2>2. Data pemesan</h2>
+<div class="card">
+<label for="nama">Nama / nama usaha</label><input id="nama" autocomplete="name" placeholder="Contoh: Toko Maju Jaya">
+<label for="hp">No. WhatsApp</label><input id="hp" type="tel" inputmode="tel" autocomplete="tel" placeholder="08xxxxxxxxxx">
+<label for="alamat">Alamat pengiriman</label><textarea id="alamat" rows="3" placeholder="Jalan, kelurahan, kecamatan, kota"></textarea>
+<label>Lokasi di peta (opsional)</label>
+<button type="button" class="btn2" id="loc">📍 Bagikan lokasi saya</button>
+<div class="note" id="locInfo" style="text-align:left;margin-top:6px"></div>
+<label for="cat">Catatan (opsional)</label><input id="cat" placeholder="Contoh: kirim sore hari">
+</div>
+
+<div class="card">
+<div class="total"><span>Total</span><span id="tot">Rp 0</span></div>
+<div class="err" id="err"></div>
+<button class="send" id="send" type="button">Kirim Pesanan</button>
+</div>
+<p class="note">Pesanan tersimpan di sistem kami lalu Anda diarahkan ke WhatsApp untuk konfirmasi. Gratis ongkir area sekitarnya (S&amp;K berlaku).</p>
+</div>
+
+<div class="dock">
+<a class="cart" href="pesanan-saya.html" aria-label="Pesanan saya"><span aria-hidden="true">🛒</span> Pesanan Saya</a>
+<button type="button" class="fab" id="fab" aria-label="Hubungi admin via WhatsApp"><span aria-hidden="true">💬</span> Hubungi Admin</button>
+</div>
+<script>
+const WA="6281312092118";
+const P=[
+ {id:"eceran",n:"Eceran",d:"1 Slop / 6 Roll",p:39000},
+ {id:"hemat",n:"Paket Hemat",d:"2 Slop / 12 Roll",p:75000,t:"Hemat & Laris!"},
+ {id:"grosir",n:"Grosir",d:"1 Karton / 72 Roll",p:420000}
+];
+const q={eceran:0,hemat:0,grosir:0};
+const $=id=>document.getElementById(id);
+const rp=n=>"Rp "+String(n).replace(/\B(?=(\d{3})+(?!\d))/g,".");
+const val=id=>$(id).value.trim();
+
+P.forEach(x=>{
+  const c=document.createElement("div");c.className="card pk";
+  c.innerHTML=`<div class="i"><b>${x.n}${x.t?`<span class="tag">${x.t}</span>`:""}</b><small>${x.d}</small><div class="price">${rp(x.p)}</div></div>
+  <div class="qty"><button type="button" data-k="${x.id}" data-d="-1" aria-label="Kurangi">−</button><output id="q-${x.id}">0</output><button type="button" data-k="${x.id}" data-d="1" aria-label="Tambah">+</button></div>`;
+  $("pkgs").appendChild(c);
+});
+$("pkgs").addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b)return;
+  const k=b.dataset.k;q[k]=Math.max(0,Math.min(99,q[k]+Number(b.dataset.d)));
+  $("q-"+k).textContent=q[k];total();
+});
+const items=()=>P.filter(x=>q[x.id]>0).map(x=>({id:x.id,nama:x.n,detail:x.d,harga:x.p,qty:q[x.id],subtotal:x.p*q[x.id]}));
+const total=()=>{const t=items().reduce((a,i)=>a+i.subtotal,0);$("tot").textContent=rp(t);return t};
+
+const waMsg=(kode,its,t,o)=>`Halo, saya mau pesan Lakban Bening SUNFINE 70 Yard.\n\n*Kode Pesanan: ${kode}*\n\n*PESANAN*\n${its.map(i=>`- ${i.nama} (${i.detail}) x ${i.qty} = ${rp(i.subtotal)}`).join("\n")}\n\n*Total: ${rp(t)}*\n\n*DATA PEMESAN*\nNama: ${o.nama}\nNo. WA: ${o.hp}\nAlamat: ${o.alamat}\nLokasi: ${o.lokasi?mapsUrl(o.lokasi):"-"}\nCatatan: ${o.catatan||"-"}\n\nTerima kasih.`;
+
+let loc=null;
+const mapsUrl=l=>"https://www.google.com/maps?q="+l.lat+","+l.lng;
+$("loc").addEventListener("click",()=>{
+  const i=$("locInfo"),b=$("loc");
+  if(loc){loc=null;b.textContent="📍 Bagikan lokasi saya";i.textContent="";return}
+  if(!navigator.geolocation){i.textContent="Browser ini tidak mendukung lokasi.";return}
+  b.disabled=true;i.textContent="Mengambil lokasi...";
+  navigator.geolocation.getCurrentPosition(p=>{
+    loc={lat:+p.coords.latitude.toFixed(6),lng:+p.coords.longitude.toFixed(6),akurasi:Math.round(p.coords.accuracy)};
+    b.disabled=false;b.textContent="✅ Lokasi terbagikan (ketuk untuk batalkan)";
+    i.textContent="Akurasi sekitar "+loc.akurasi+" m.";
+  },e=>{
+    b.disabled=false;
+    i.textContent=e.code===1?"Izin lokasi ditolak. Aktifkan izin lokasi di browser lalu coba lagi.":"Lokasi tidak bisa diambil. Coba lagi.";
+  },{enableHighAccuracy:true,timeout:15000});
+});
+$("fab").addEventListener("click",()=>{location.href="https://wa.me/qr/4YF7X6M7SQZ7M1"});
+window.LB={WA,items,total,waMsg,val,rp,$,ready:false,get loc(){return loc}};
+$("send").addEventListener("click",()=>{if(!window.LB.ready){$("err").textContent="Koneksi ke Firebase belum siap. Buka file ini lewat hosting (https) atau Chrome, lalu muat ulang."}});
+</script>
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {getDatabase,ref,push,set,onValue,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const app=initializeApp({
+  apiKey:"AIzaSyDqfCI_ZQzbhvvPQsVYHEMuFlhCyao5AYU",
+  authDomain:"lakban-16dc4.firebaseapp.com",
+  databaseURL:"https://lakban-16dc4-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"lakban-16dc4",
+  storageBucket:"lakban-16dc4.firebasestorage.app",
+  messagingSenderId:"227042957618",
+  appId:"1:227042957618:web:bed02a4101b598380b1f2b"
+});
+const db=getDatabase(app);
+const {WA,items,total,waMsg,val,rp,$}=window.LB;
+window.LB.ready=true;
+$("send").addEventListener("click",async()=>{
+  const its=items(),t=total(),err=$("err");
+  if(!its.length){err.textContent="Pilih minimal satu paket dulu.";return}
+  if(!val("nama")||!val("hp")||!val("alamat")){err.textContent="Nama, no. WhatsApp, dan alamat wajib diisi.";return}
+  err.textContent="";const btn=$("send");btn.disabled=true;btn.textContent="Menyimpan pesanan...";
+  const o={nama:val("nama"),hp:val("hp"),alamat:val("alamat"),catatan:val("cat"),...(window.LB.loc?{lokasi:window.LB.loc}:{})};
+  try{
+    const r=push(ref(db,"orders"));
+    const kode=r.key.slice(-6).toUpperCase();
+    await set(r,{...o,kode,items:its,total:t,status:"baru",createdAt:serverTimestamp()});
+    try{const my=JSON.parse(localStorage.getItem("myOrders")||"[]");my.unshift({id:r.key,kode});localStorage.setItem("myOrders",JSON.stringify(my.slice(0,50)))}catch(_){}
+    localStorage.setItem("lastOrder",JSON.stringify({id:r.key,kode,wa:"https://wa.me/"+WA+"?text="+encodeURIComponent(waMsg(kode,its,t,o))}));
+    location.href="https://wa.me/"+WA+"?text="+encodeURIComponent(waMsg(kode,its,t,o));
+  }catch(e){
+    console.error(e);err.textContent="Gagal menyimpan pesanan. Periksa koneksi lalu coba lagi.";
+    btn.disabled=false;btn.textContent="Kirim Pesanan";
+  }
+});
+
+// Status pesanan terakhir (realtime)
+try{
+  const last=JSON.parse(localStorage.getItem("lastOrder")||"null");
+  if(last){
+    $("stat").classList.remove("hide");$("sKode").textContent=last.kode;$("sWa").onclick=()=>{location.href=last.wa};
+    onValue(ref(db,"orders/"+last.id+"/status"),s=>{$("sSt").textContent=s.val()||"-"},()=>{$("stat").classList.add("hide")});
+  }
+}catch(e){}
+</script>
+</body>
+</html>

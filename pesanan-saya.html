@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pesanan Saya – Lakban Sunfine</title>
+<style>
+:root{--bg:#f4f7f2;--card:#fff;--ink:#12301f;--mut:#5b6e61;--g:#0f5c35;--g2:#0a4426;--y:#fcb824;--line:#d9e3dc;--inp:#fff;--pr:#0f5c35}
+@media (prefers-color-scheme:dark){:root{--bg:#0c1a12;--card:#13271b;--ink:#eef5f0;--mut:#9db3a4;--line:#254232;--inp:#0f2016;--pr:#fcb824}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.45;padding-bottom:env(safe-area-inset-bottom,0px)}
+.wrap{max-width:560px;margin:0 auto;padding:0 16px 40px}
+header{background:linear-gradient(160deg,var(--g2),var(--g));color:#fff;padding:calc(20px + env(safe-area-inset-top,0px)) 16px 22px;border-radius:0 0 24px 24px}
+header .in{max-width:560px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;gap:10px}
+header h1{margin:0;font-size:22px}
+header a{color:#fff;font-weight:700;font-size:14px;background:rgba(0,0,0,.28);padding:8px 14px;border-radius:99px;text-decoration:none;white-space:nowrap}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-top:12px}
+.top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.top b{font-size:16px}
+.kode{font-size:12px;color:var(--mut)}
+.st{padding:3px 10px;border-radius:99px;font-size:12px;font-weight:800;text-transform:uppercase;white-space:nowrap}
+.st.baru{background:#fcb824;color:#3a2a00}.st.diproses{background:#3b82f6;color:#fff}.st.dikirim{background:#8b5cf6;color:#fff}.st.selesai{background:#16a34a;color:#fff}.st.batal{background:#9ca3af;color:#fff}
+.steps{display:flex;margin:14px 0 6px}
+.steps div{flex:1;text-align:center;font-size:11px;color:var(--mut);position:relative}
+.steps div:before{content:"";display:block;width:14px;height:14px;border-radius:50%;background:var(--line);margin:0 auto 4px;position:relative;z-index:1}
+.steps div:after{content:"";position:absolute;top:6px;left:-50%;width:100%;height:3px;background:var(--line)}
+.steps div:first-child:after{display:none}
+.steps div.on{color:var(--ink);font-weight:700}
+.steps div.on:before,.steps div.on:after{background:var(--y)}
+ul{margin:8px 0;padding-left:18px}
+.info{font-size:14px;color:var(--mut)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.row button{flex:1;padding:11px 12px;border-radius:12px;border:1px solid var(--line);background:var(--inp);color:var(--ink);font:inherit;font-weight:600;cursor:pointer}
+.row button.wa{background:#25d366;color:#06310f;border:0;font-weight:800}
+.empty{text-align:center;color:var(--mut);padding:40px 10px}
+.empty a{display:inline-block;margin-top:14px;background:var(--y);color:#3a2a00;font-weight:800;padding:12px 20px;border-radius:12px;text-decoration:none}
+.note{font-size:13px;color:var(--mut);text-align:center;margin-top:18px}
+</style>
+</head>
+<body>
+<header><div class="in"><h1>📋 Pesanan Saya</h1><a href="order.html">+ Pesan Lagi</a></div></header>
+<div class="wrap">
+<div id="list"><div class="empty">Memuat pesanan...</div></div>
+<p class="note">Daftar ini tersimpan di perangkat yang Anda gunakan untuk memesan. Status diperbarui otomatis.</p>
+</div>
+
+<script>
+setTimeout(function(){if(!window.PS_OK){document.getElementById("list").innerHTML='<div class="empty">Gagal terhubung ke Firebase. Buka halaman ini lewat hosting (https) atau Chrome, lalu muat ulang.</div>'}},7000);
+</script>
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {getDatabase,ref,onValue} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const app=initializeApp({
+  apiKey:"AIzaSyDqfCI_ZQzbhvvPQsVYHEMuFlhCyao5AYU",
+  authDomain:"lakban-16dc4.firebaseapp.com",
+  databaseURL:"https://lakban-16dc4-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"lakban-16dc4",
+  storageBucket:"lakban-16dc4.firebasestorage.app",
+  messagingSenderId:"227042957618",
+  appId:"1:227042957618:web:bed02a4101b598380b1f2b"
+});
+const db=getDatabase(app);
+window.PS_OK=true;
+const WA="6281312092118";
+const $=id=>document.getElementById(id);
+const rp=n=>"Rp "+String(n||0).replace(/\B(?=(\d{3})+(?!\d))/g,".");
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const STEPS=["baru","diproses","dikirim","selesai"];
+
+const load=()=>{try{return JSON.parse(localStorage.getItem("myOrders")||"[]")}catch(e){return[]}};
+const save=a=>localStorage.setItem("myOrders",JSON.stringify(a));
+
+// Migrasi pesanan terakhir dari versi sebelumnya
+try{
+  const l=JSON.parse(localStorage.getItem("lastOrder")||"null");
+  const a=load();
+  if(l&&l.id&&!a.some(x=>x.id===l.id)){a.unshift({id:l.id,kode:l.kode});save(a)}
+}catch(e){}
+
+let mine=load(),data={};
+const subs={};
+function watch(o){
+  if(subs[o.id])return;
+  subs[o.id]=onValue(ref(db,"orders/"+o.id),s=>{data[o.id]=s.val();render()},()=>{data[o.id]=null;render()});
+}
+mine.forEach(watch);
+
+function card(o,m){
+  const its=Object.values(o.items||{});
+  const when=o.createdAt?new Date(o.createdAt).toLocaleString("id-ID",{dateStyle:"medium",timeStyle:"short"}):"-";
+  const idx=STEPS.indexOf(o.status);
+  const steps=o.status==="batal"?"":`<div class="steps">${STEPS.map((s,i)=>`<div class="${i<=idx?"on":""}">${s[0].toUpperCase()+s.slice(1)}</div>`).join("")}</div>`;
+  let loc="";
+  if(o.lokasi&&isFinite(o.lokasi.lat)&&isFinite(o.lokasi.lng))loc="<br>📌 Lokasi dibagikan";
+  return `<div class="card">
+  <div class="top"><div><b>Pesanan #${esc(o.kode||m.kode)}</b><div class="kode">${esc(when)}</div></div><span class="st ${esc(o.status)}">${esc(o.status)}</span></div>
+  ${steps}
+  <ul>${its.map(i=>`<li>${esc(i.nama)} (${esc(i.detail)}) × ${esc(i.qty)} — ${rp(i.subtotal)}</li>`).join("")}</ul>
+  <div><b>Total ${rp(o.total)}</b></div>
+  <div class="info" style="margin-top:6px">📍 ${esc(o.alamat)}${loc}${o.catatan?`<br>📝 ${esc(o.catatan)}`:""}</div>
+  <div class="row"><button class="wa" data-wa="${esc(o.kode||m.kode)}" data-st="${esc(o.status)}">Hubungi Admin</button><button data-rm="${esc(m.id)}">Hapus dari daftar</button></div>
+  </div>`;
+}
+function render(){
+  const rows=mine.map(m=>({m,o:data[m.id]})).filter(x=>x.o);
+  rows.sort((a,b)=>(b.o.createdAt||0)-(a.o.createdAt||0));
+  const loading=mine.some(m=>!(m.id in data));
+  if(!rows.length){
+    $("list").innerHTML=loading?'<div class="empty">Memuat pesanan...</div>':'<div class="empty">Belum ada pesanan di perangkat ini.<br><a href="order.html">Buat pesanan</a></div>';
+    return;
+  }
+  $("list").innerHTML=rows.map(x=>card(x.o,x.m)).join("");
+}
+$("list").addEventListener("click",e=>{
+  const w=e.target.closest("[data-wa]");
+  if(w){
+    const t="Halo admin, saya mau menanyakan pesanan saya dengan kode "+w.dataset.wa+" (status: "+w.dataset.st+").";
+    location.href="https://wa.me/"+WA+"?text="+encodeURIComponent(t);return;
+  }
+  const r=e.target.closest("[data-rm]");
+  if(r&&confirm("Hapus pesanan ini dari daftar di perangkat Anda? Data pesanan di toko tidak terhapus.")){
+    mine=mine.filter(m=>m.id!==r.dataset.rm);save(mine);render();
+  }
+});
+render();
+</script>
+</body>
+</html>
