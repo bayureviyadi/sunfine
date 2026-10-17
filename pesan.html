@@ -3,6 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>
+(function(){var b=function(e){e.preventDefault();e.stopPropagation();return false};
+document.addEventListener("contextmenu",b);
+document.addEventListener("dragstart",function(e){if(e.target&&e.target.tagName==="IMG")b(e)});
+document.addEventListener("keydown",function(e){var c=e.ctrlKey||e.metaKey,k=e.code;
+if(k==="F12"||(c&&e.shiftKey&&(k==="KeyI"||k==="KeyJ"||k==="KeyC"||k==="KeyK"))||(c&&(k==="KeyU"||k==="KeyS"))||(e.metaKey&&e.altKey&&(k==="KeyI"||k==="KeyJ"||k==="KeyC"||k==="KeyU")))b(e)},true);
+})();
+</script>
 <title>Pesan Lakban Sunfine – B2B & Grosir</title>
 <style>
 :root{--bg:#f4f7f2;--card:#fff;--ink:#12301f;--mut:#5b6e61;--g:#0f5c35;--g2:#0a4426;--y:#fcb824;--line:#d9e3dc;--inp:#fff;--pr:#0f5c35}
@@ -207,8 +215,13 @@ $("send").addEventListener("click",async()=>{
 try{
   const last=JSON.parse(localStorage.getItem("lastOrder")||"null");
   if(last){
-    $("stat").classList.remove("hide");$("sKode").textContent=last.kode;$("sWa").onclick=()=>{location.href=last.wa};
-    onValue(ref(db,"orders/"+last.id+"/status"),s=>{$("sSt").textContent=s.val()||"-"},()=>{$("stat").classList.add("hide")});
+    $("sKode").textContent=last.kode;$("sWa").onclick=()=>{location.href=last.wa};
+    onValue(ref(db,"orders/"+last.id+"/status"),s=>{
+      const v=s.val();
+      if(v===null){localStorage.removeItem("lastOrder");$("stat").classList.add("hide");return}
+      if(v==="selesai"){$("stat").classList.add("hide");return}
+      $("sSt").textContent=v;$("stat").classList.remove("hide");
+    },()=>{$("stat").classList.add("hide")});
   }
 }catch(e){}
 </script>

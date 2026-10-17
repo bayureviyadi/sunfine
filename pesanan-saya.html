@@ -3,6 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>
+(function(){var b=function(e){e.preventDefault();e.stopPropagation();return false};
+document.addEventListener("contextmenu",b);
+document.addEventListener("dragstart",function(e){if(e.target&&e.target.tagName==="IMG")b(e)});
+document.addEventListener("keydown",function(e){var c=e.ctrlKey||e.metaKey,k=e.code;
+if(k==="F12"||(c&&e.shiftKey&&(k==="KeyI"||k==="KeyJ"||k==="KeyC"||k==="KeyK"))||(c&&(k==="KeyU"||k==="KeyS"))||(e.metaKey&&e.altKey&&(k==="KeyI"||k==="KeyJ"||k==="KeyC"||k==="KeyU")))b(e)},true);
+})();
+</script>
 <title>Pesanan Saya – Lakban Sunfine</title>
 <style>
 :root{--bg:#f4f7f2;--card:#fff;--ink:#12301f;--mut:#5b6e61;--g:#0f5c35;--g2:#0a4426;--y:#fcb824;--line:#d9e3dc;--inp:#fff;--pr:#0f5c35}
@@ -32,6 +40,8 @@ ul{margin:8px 0;padding-left:18px}
 .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .row button{flex:1;padding:11px 12px;border-radius:12px;border:1px solid var(--line);background:var(--inp);color:var(--ink);font:inherit;font-weight:600;cursor:pointer}
 .row button.wa{background:#25d366;color:#06310f;border:0;font-weight:800}
+.row button.cx{color:#d33;border-color:#d33}
+.row button:disabled{opacity:.55;cursor:default}
 .tabs{display:flex;gap:8px;margin-top:14px}
 .tab{flex:1;padding:10px 6px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
 .tab.on{background:var(--y);color:#3a2a00;border-color:var(--y)}
@@ -54,7 +64,7 @@ setTimeout(function(){if(!window.PS_OK){document.getElementById("list").innerHTM
 </script>
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import {getDatabase,ref,onValue} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import {getDatabase,ref,onValue,update} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const app=initializeApp({
   apiKey:"AIzaSyDqfCI_ZQzbhvvPQsVYHEMuFlhCyao5AYU",
@@ -85,9 +95,21 @@ try{
 
 let mine=load(),data={},tab="semua";
 const subs={};
+function gone(id){
+  // Pesanan sudah dihapus admin: hapus juga jejaknya di perangkat ini
+  mine=mine.filter(m=>m.id!==id);save(mine);delete data[id];
+  if(typeof subs[id]==="function"){subs[id]();}
+  delete subs[id];
+  try{const l=JSON.parse(localStorage.getItem("lastOrder")||"null");if(l&&l.id===id)localStorage.removeItem("lastOrder")}catch(e){}
+  render();
+}
 function watch(o){
   if(subs[o.id])return;
-  subs[o.id]=onValue(ref(db,"orders/"+o.id),s=>{data[o.id]=s.val();render()},()=>{data[o.id]=null;render()});
+  subs[o.id]=onValue(ref(db,"orders/"+o.id),s=>{
+    const v=s.val();
+    if(v===null){gone(o.id);return}
+    data[o.id]=v;render()
+  },()=>{data[o.id]=null;render()});
 }
 mine.forEach(watch);
 
@@ -95,7 +117,8 @@ function card(o,m){
   const its=Object.values(o.items||{});
   const when=o.createdAt?new Date(o.createdAt).toLocaleString("id-ID",{dateStyle:"medium",timeStyle:"short"}):"-";
   const idx=STEPS.indexOf(o.status);
-  const note=o.status==="selesai"?"✅ Pesanan sudah selesai":o.status==="batal"?"❌ Pesanan dibatalkan":"⏳ Belum selesai · "+({baru:"menunggu konfirmasi admin",diproses:"sedang diproses",dikirim:"sedang dikirim"}[o.status]||"dalam proses");
+  const run=o.status!=="selesai"&&o.status!=="batal";
+  const note=run&&o.batalDiminta?"🕓 Permintaan pembatalan terkirim · menunggu konfirmasi admin":o.status==="selesai"?"✅ Pesanan sudah selesai":o.status==="batal"?"❌ Pesanan dibatalkan":"⏳ Belum selesai · "+({baru:"menunggu konfirmasi admin",diproses:"sedang diproses",dikirim:"sedang dikirim"}[o.status]||"dalam proses");
   const steps=o.status==="batal"?"":`<div class="steps">${STEPS.map((s,i)=>`<div class="${i<=idx?"on":""}">${s[0].toUpperCase()+s.slice(1)}</div>`).join("")}</div>`;
   let loc="";
   if(o.lokasi&&isFinite(o.lokasi.lat)&&isFinite(o.lokasi.lng))loc="<br>📌 Lokasi dibagikan";
@@ -106,7 +129,7 @@ function card(o,m){
   <ul>${its.map(i=>`<li>${esc(i.nama)} (${esc(i.detail)}) × ${esc(i.qty)} — ${rp(i.subtotal)}</li>`).join("")}</ul>
   <div><b>Total ${rp(o.total)}</b></div>
   <div class="info" style="margin-top:6px">📍 ${esc(o.alamat)}${loc}${o.catatan?`<br>📝 ${esc(o.catatan)}`:""}</div>
-  <div class="row"><button class="wa" data-wa="${esc(o.kode||m.kode)}" data-st="${esc(o.status)}">Hubungi Admin</button><button data-rm="${esc(m.id)}">Hapus dari daftar</button></div>
+  <div class="row"><button class="wa" data-wa="${esc(o.kode||m.kode)}" data-st="${esc(o.status)}">Hubungi Admin</button>${run?(o.batalDiminta?`<button class="cx" disabled>Menunggu konfirmasi</button>`:`<button class="cx" data-cancel="${esc(m.id)}">Batalkan Pesanan</button>`):""}<button data-rm="${esc(m.id)}">Hapus dari daftar</button></div>
   </div>`;
 }
 function render(){
@@ -129,6 +152,13 @@ $("list").addEventListener("click",e=>{
   if(w){
     const t="Halo admin, saya mau menanyakan pesanan saya dengan kode "+w.dataset.wa+" (status: "+w.dataset.st+").";
     location.href="https://wa.me/"+WA+"?text="+encodeURIComponent(t);return;
+  }
+  const cx=e.target.closest("[data-cancel]");
+  if(cx){
+    if(!confirm("Ajukan pembatalan pesanan ini? Pembatalan baru berlaku setelah dikonfirmasi admin."))return;
+    cx.disabled=true;
+    update(ref(db,"orders/"+cx.dataset.cancel),{batalDiminta:true}).catch(()=>{cx.disabled=false;alert("Gagal mengirim permintaan pembatalan. Periksa koneksi lalu coba lagi.")});
+    return;
   }
   const r=e.target.closest("[data-rm]");
   if(r&&confirm("Hapus pesanan ini dari daftar di perangkat Anda? Data pesanan di toko tidak terhapus.")){
